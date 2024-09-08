@@ -5,11 +5,13 @@
 package org.mozilla.reference.browser.addons
 
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -23,6 +25,11 @@ import mozilla.components.feature.addons.ui.AddonsManagerAdapterDelegate
 import mozilla.components.support.base.feature.ViewBoundFeatureWrapper
 import org.mozilla.reference.browser.R
 import org.mozilla.reference.browser.ext.components
+import java.io.File
+import java.io.InputStream
+import java.io.OutputStream
+import java.net.URI
+import java.util.*
 
 /**
  * Fragment use for managing add-ons.
@@ -120,11 +127,17 @@ class AddonsFragment : Fragment(), AddonsManagerAdapterDelegate {
         installAddon(addon)
     }
 
-    private val installAddon: ((Addon) -> Unit) = { addon ->
+    val installAddon: ((Addon) -> Unit) = { addon ->
         addonProgressOverlay.visibility = View.VISIBLE
         isInstallationInProgress = true
+        val addonUrl = if (addon.downloadUrl.startsWith("file://")) {
+            addon.downloadUrl
+        } else {
+            // Handle remote URL or other logic if needed
+            addon.downloadUrl
+        }
         requireContext().components.core.addonManager.installAddon(
-            url = addon.downloadUrl,
+            url = addonUrl,
             onSuccess = {
                 runIfFragmentIsAttached {
                     isInstallationInProgress = false
@@ -147,4 +160,36 @@ class AddonsFragment : Fragment(), AddonsManagerAdapterDelegate {
      * Whether or not an add-on installation is in progress.
      */
     private var isInstallationInProgress = false
+
+    private val pickFileContract = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+        uri?.let { installLocalXPI(it) }
+    }
+
+    private fun installLocalXPI(uri: Uri) {
+        addonProgressOverlay.visibility = View.VISIBLE
+        isInstallationInProgress = true
+        requireContext().components.core.installLocalXPI(
+            requireContext(),
+            uri,
+            onSuccess = {
+                runIfFragmentIsAttached {
+                    isInstallationInProgress = false
+                    this@AddonsFragment.view?.let { view ->
+                        bindRecyclerView(view)
+                    }
+                    addonProgressOverlay.visibility = View.GONE
+                }
+            },
+            onError = { _ ->
+                runIfFragmentIsAttached {
+                    addonProgressOverlay.visibility = View.GONE
+                    isInstallationInProgress = false
+                }
+            }
+        )
+    }
+
+    fun openFilePicker() {
+        pickFileContract.launch("application/x-xpinstall")
+    }
 }

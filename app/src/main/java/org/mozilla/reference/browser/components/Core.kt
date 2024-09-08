@@ -6,6 +6,7 @@ package org.mozilla.reference.browser.components
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.net.Uri
 import androidx.preference.PreferenceManager
 import mozilla.components.browser.engine.gecko.permission.GeckoSitePermissionsStorage
 import mozilla.components.browser.icons.BrowserIcons
@@ -20,6 +21,8 @@ import mozilla.components.browser.thumbnails.storage.ThumbnailStorage
 import mozilla.components.concept.engine.DefaultSettings
 import mozilla.components.concept.engine.Engine
 import mozilla.components.concept.engine.EngineSession.TrackingProtectionPolicy
+import mozilla.components.concept.engine.prompt.PromptRequest
+import mozilla.components.concept.engine.prompt.PromptRequest.*
 import mozilla.components.concept.fetch.Client
 import mozilla.components.feature.addons.AddonManager
 import mozilla.components.feature.addons.amo.AMOAddonsProvider
@@ -257,6 +260,33 @@ class Core(private val context: Context) {
             !normalMode && privateMode -> trackingPolicy.forPrivateSessionsOnly()
             else -> TrackingProtectionPolicy.none()
         }
+    }
+
+    public fun installLocalXPI(context: Context, uri: Uri, onSuccess: () -> Unit, onError: (Exception) -> Unit) {
+        val inputStream = context.contentResolver.openInputStream(uri)
+        if (inputStream != null) {
+            val tempFile = java.io.File(context.cacheDir, "temp_addon.xpi")
+            tempFile.outputStream().use { outputStream ->
+                inputStream.copyTo(outputStream)
+            }
+            context.components.core.addonManager.installAddon(
+                url = tempFile.toURI().toString(),
+                onSuccess = {
+                    tempFile.delete()
+                    onSuccess()
+                },
+                onError = { exception ->
+                    tempFile.delete()
+                    onError(exception)
+                }
+            )
+        } else {
+            onError(Exception("Failed to open input stream for URI: $uri"))
+        }
+    }
+
+    private fun onError(exception: Throwable) {
+
     }
 
     private val lazySecurePrefs = lazy { SecureAbove22Preferences(context, KEY_STORAGE_NAME) }
