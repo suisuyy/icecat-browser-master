@@ -34,7 +34,7 @@ class AddonsActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        setContentView(R.layout.add_ons_man)
 
         if (savedInstanceState == null) {
             supportFragmentManager.beginTransaction().apply {
