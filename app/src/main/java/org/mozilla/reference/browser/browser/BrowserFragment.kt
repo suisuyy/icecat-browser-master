@@ -7,6 +7,8 @@ package org.mozilla.reference.browser.browser
 import android.os.Bundle
 import android.view.View
 import android.widget.LinearLayout
+import android.os.Handler
+import android.os.Looper
 import androidx.preference.PreferenceManager
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import mozilla.components.browser.thumbnails.BrowserThumbnails
@@ -89,8 +91,6 @@ class BrowserFragment : BaseBrowserFragment(), UserInteractionHandler {
             ),
         )
 
-
-
         thumbnailsFeature.set(
             feature = BrowserThumbnails(
                 requireContext(),
@@ -122,13 +122,16 @@ class BrowserFragment : BaseBrowserFragment(), UserInteractionHandler {
             owner = this,
             view = view,
         )
-        TabsToolbarFeature(
-            toolbar = toolbar,
-            sessionId = sessionId,
-            store = requireComponents.core.store,
-            showTabs = ::showTabs,
-            lifecycleOwner = this,
-        )
+
+        Handler(Looper.getMainLooper()).postDelayed({
+            TabsToolbarFeature(
+                toolbar = toolbar,
+                sessionId = sessionId,
+                store = requireComponents.core.store,
+                showTabs = ::showTabs,
+                lifecycleOwner = this,
+            )
+        }, 3000) // 3000 milliseconds = 3 seconds
 
         windowFeature.set(
             feature = WindowFeature(
@@ -146,9 +149,16 @@ class BrowserFragment : BaseBrowserFragment(), UserInteractionHandler {
         // val tabButtonsContainer = requireActivity().findViewById<LinearLayout>(R.id.tab_buttons_container)
         // tabButtonsContainer.visibility = if (tabButtonsContainer.visibility == View.VISIBLE) View.GONE else View.VISIBLE
         //show tabstray
-        activity?.supportFragmentManager?.beginTransaction()?.apply {
-            replace(R.id.container, TabsTrayFragment())
-            commit()
+        // activity?.supportFragmentManager?.beginTransaction()?.apply {
+        //     replace(R.id.container, TabsTrayFragment())
+        //     commit()
+        // }
+
+        
+        val fragmentManager = activity?.supportFragmentManager
+        val newFragment = TabsTrayFragment()
+        if (fragmentManager != null) {
+            newFragment.show(fragmentManager, "tabs_tray")
         }
     }
 

@@ -69,7 +69,7 @@
         android:layout_width="350dp"
         android:layout_height="wrap_content"
         android:scrollbars="none"
-        android:layout_gravity="top"
+        android:layout_gravity="bottom"
         >
         <LinearLayout
             android:id="@+id/tab_buttons_container"

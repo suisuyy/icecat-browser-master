@@ -10,6 +10,7 @@ import android.content.Intent
 import android.text.Editable
 import android.util.DisplayMetrics
 import android.view.Gravity
+import android.view.MotionEvent
 import android.view.View
 import android.widget.Button
 import android.widget.EditText
@@ -256,10 +257,24 @@ class ToolbarIntegration(
                         else R.drawable.tab_button_background
                     )
                     setTextColor(ContextCompat.getColor(context, R.color.tab_button_text_color))
-                    gravity = Gravity.CENTER
-
                     setOnClickListener {
                         tabsUseCases.selectTab(tab.id)
+                    }
+
+                    setOnTouchListener { view, event ->
+                        when (event.action) {
+                            MotionEvent.ACTION_DOWN -> {
+                                view.alpha = 0.5f
+                                tabsUseCases.selectTab(tab.id)
+                                true
+                            }
+                            MotionEvent.ACTION_UP -> {
+                                view.alpha = 1.0f
+                                performClick()
+                                true
+                            }
+                            else -> false
+                        }
                     }
                 }
                 it.addView(button)

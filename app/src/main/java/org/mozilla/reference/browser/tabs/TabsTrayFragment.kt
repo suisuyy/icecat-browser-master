@@ -7,9 +7,12 @@ package org.mozilla.reference.browser.tabs
 import android.content.Context
 import android.graphics.Color
 import android.os.Bundle
+import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.WindowManager
+import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -31,11 +34,17 @@ import org.mozilla.reference.browser.ext.requireComponents
 /**
  * A fragment for displaying the tabs tray.
  */
-class TabsTrayFragment : Fragment(), UserInteractionHandler {
+class TabsTrayFragment : DialogFragment(), UserInteractionHandler {
     private var tabsFeature: TabsFeature? = null
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View =
-        inflater.inflate(R.layout.fragment_tabstray, container, false)
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setStyle(STYLE_NO_FRAME, android.R.style.Theme_Translucent_NoTitleBar)
+    }
+
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
+        return inflater.inflate(R.layout.fragment_tabstray, container, false)
+    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -53,15 +62,15 @@ class TabsTrayFragment : Fragment(), UserInteractionHandler {
 
         tabsPanel.initialize(tabsFeature, updateTabsToolbar = ::updateTabsToolbar)
         tabsToolbar.initialize(tabsFeature) { closeTabsTray() }
-
-        // Ensure the toolbar is visible
-        val toolbar: BrowserToolbar = requireActivity().findViewById(R.id.toolbar)
-        toolbar.visibility = View.VISIBLE
     }
 
     override fun onStart() {
         super.onStart()
-
+        dialog?.window?.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+        dialog?.window?.setGravity(Gravity.TOP)
+        dialog?.window?.clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
+        dialog?.window?.addFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL)
+        dialog?.window?.addFlags(WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH)
         tabsFeature?.start()
     }
 
@@ -77,10 +86,13 @@ class TabsTrayFragment : Fragment(), UserInteractionHandler {
     }
 
     private fun closeTabsTray() {
-        activity?.supportFragmentManager?.beginTransaction()?.apply {
-            replace(R.id.container, BrowserFragment.create())
-            commit()
-        }
+//        activity?.supportFragmentManager?.beginTransaction()?.apply {
+//            if (activity?.supportFragmentManager?.findFragmentByTag("browser_fragment") == null) {
+//                replace(R.id.container, BrowserFragment.create(), "browser_fragment")
+//            }
+//            commit()
+//        }
+        dismiss();
     }
 
     private fun updateTabsToolbar(isPrivate: Boolean) {
@@ -91,27 +103,36 @@ class TabsTrayFragment : Fragment(), UserInteractionHandler {
     private fun createAndSetupTabsTray(context: Context): TabsTray {
         val layoutManager = LinearLayoutManager(context)
         val thumbnailLoader = ThumbnailLoader(context.components.core.thumbnailStorage)
-        val trayStyling = TabsTrayStyling(itemBackgroundColor = Color.TRANSPARENT, itemTextColor = Color.WHITE)
+        val trayStyling = TabsTrayStyling(itemBackgroundColor = Color.BLACK, itemTextColor = Color.WHITE)
         val viewHolderProvider: ViewHolderProvider = { viewGroup ->
             val view = LayoutInflater.from(context)
                 .inflate(R.layout.browser_tabstray_item, viewGroup, false)
 
             DefaultTabViewHolder(view, thumbnailLoader)
         }
+        
         val tabsAdapter = TabsAdapter(
             thumbnailLoader = thumbnailLoader,
             viewHolderProvider = viewHolderProvider,
             styling = trayStyling,
             delegate = object : TabsTray.Delegate {
+                var lastSelectedTime: Long = 0;     
+                var lastSelectedTabId: String? = null;
                 override fun onTabSelected(tab: TabSessionState, source: String?) {
                     requireComponents.useCases.tabsUseCases.selectTab(tab.id)
-                    closeTabsTray()
+                    if(System.currentTimeMillis() - lastSelectedTime < 1000 && lastSelectedTabId == tab.id) {  
+                        closeTabsTray()
+                    }
+                    lastSelectedTime = System.currentTimeMillis();
+                    lastSelectedTabId = tab.id;
                 }
 
                 override fun onTabClosed(tab: TabSessionState, source: String?) {
                     requireComponents.useCases.tabsUseCases.removeTab(tab.id)
                 }
+
             },
+
         )
 
         val tabsTray = requireView().findViewById<RecyclerView>(R.id.tabsTray)

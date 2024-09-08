@@ -154,8 +154,8 @@ class WebExtensionActionPopupDialogFragment : DialogFragment(), EngineSession.Ob
             }
             currentWidth == (resources.displayMetrics.widthPixels * 0.7).toInt() -> {
                 Pair(
-                    (resources.displayMetrics.widthPixels * 0.9).toInt(),
-                    (resources.displayMetrics.heightPixels * 0.6).toInt()
+                    (resources.displayMetrics.widthPixels ).toInt(),
+                    (resources.displayMetrics.heightPixels * 0.9).toInt()
                 )
             }
             else -> {
