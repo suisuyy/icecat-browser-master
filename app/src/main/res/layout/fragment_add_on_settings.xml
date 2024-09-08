@@ -9,10 +9,37 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_height="match_parent">
 
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:background="?attr/colorPrimary">
+
+        <Button
+            android:id="@+id/close_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Close" />
+
+        <Button
+            android:id="@+id/resize_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Resize" />
+
+        <View
+            android:id="@+id/draggable_area"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:background="?attr/colorPrimary" />
+    </LinearLayout>
+
     <mozilla.components.concept.engine.EngineView
         tools:ignore="Instantiatable"
         android:id="@+id/addonSettingsEngineView"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent"
+        android:layout_marginTop="48dp" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

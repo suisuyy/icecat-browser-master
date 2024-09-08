@@ -11,7 +11,8 @@
     <androidx.cardview.widget.CardView
         android:id="@+id/mozac_browser_tabstray_card"
         android:layout_width="100dp"
-        android:layout_height="56dp"
+        android:layout_height
+            ="56dp"
         android:layout_marginTop="8dp"
         android:layout_marginStart="8dp"
         app:layout_constraintStart_toStartOf="parent"

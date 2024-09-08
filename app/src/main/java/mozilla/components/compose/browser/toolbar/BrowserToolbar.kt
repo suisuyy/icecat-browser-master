@@ -67,6 +67,7 @@ fun BrowserEditToolbar(
         input,
         onValueChange = { value -> input = value },
         singleLine = true,
+
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri, imeAction = ImeAction.Go),
         keyboardActions = KeyboardActions(
             onGo = { onUrlCommitted(input) },

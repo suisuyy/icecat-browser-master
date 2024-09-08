@@ -4,10 +4,21 @@
 
 package org.mozilla.reference.browser.browser
 
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
+import android.text.Editable
+import android.util.DisplayMetrics
+import android.view.Gravity
+import android.view.View
+import android.widget.Button
+import android.widget.EditText
+import android.widget.HorizontalScrollView
+import android.widget.LinearLayout
+import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.core.content.res.ResourcesCompat
+import androidx.core.view.marginTop
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
@@ -16,6 +27,7 @@ import mozilla.components.browser.domains.autocomplete.ShippedDomainsProvider
 import mozilla.components.browser.menu2.BrowserMenuController
 import mozilla.components.browser.state.selector.selectedTab
 import mozilla.components.browser.state.state.SessionState
+import mozilla.components.browser.state.state.TabSessionState
 import mozilla.components.browser.state.store.BrowserStore
 import mozilla.components.browser.storage.sync.PlacesHistoryStorage
 import mozilla.components.browser.toolbar.BrowserToolbar
@@ -43,7 +55,7 @@ import org.mozilla.reference.browser.ext.share
 import org.mozilla.reference.browser.settings.SettingsActivity
 import org.mozilla.reference.browser.tabs.synced.SyncedTabsActivity
 
-@Suppress("LongParameterList")
+@Suppress("LongParameterList", "DEPRECATION")
 class ToolbarIntegration(
     private val context: Context,
     toolbar: BrowserToolbar,
@@ -59,6 +71,39 @@ class ToolbarIntegration(
     }
 
     private val scope = MainScope()
+    private val menuController: MenuController = BrowserMenuController()
+
+    init {
+        toolbar.display.indicators = listOf(
+            DisplayToolbar.Indicators.SECURITY,
+            DisplayToolbar.Indicators.TRACKING_PROTECTION,
+        )
+        toolbar.display.displayIndicatorSeparator = true
+        toolbar.display.menuController = menuController
+
+        toolbar.display.hint = context.getString(R.string.toolbar_hint)
+        toolbar.edit.hint = context.getString(R.string.toolbar_hint)
+
+        ToolbarAutocompleteFeature(toolbar).apply {
+            updateAutocompleteProviders(
+                listOf(historyStorage, shippedDomainsProvider),
+            )
+        }
+
+        toolbar.display.setUrlBackground(
+            ResourcesCompat.getDrawable(context.resources, R.drawable.url_background, context.theme),
+        )
+
+        scope.launch {
+            store.flow()
+                .map { state -> state.selectedTab to state.tabs }
+                .distinctUntilChanged()
+                .collect { (selectedTab, tabs) ->
+                    menuController.submitList(menuItems(selectedTab))
+                    updateTabButtons(tabs, selectedTab)
+                }
+        }
+    }
 
     private fun menuToolbar(session: SessionState?): RowMenuCandidate {
         val tint = ContextCompat.getColor(context, R.color.icons)
@@ -171,39 +216,57 @@ class ToolbarIntegration(
                 intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
                 context.startActivity(intent)
             },
+
+            TextMenuCandidate(text = "Tabs") {
+                val activity = context as? Activity
+                val tabButtonsContainer = activity?.findViewById<LinearLayout>(R.id.tab_buttons_container)
+                tabButtonsContainer?.visibility = if (tabButtonsContainer?.visibility == View.VISIBLE) View.GONE else View.VISIBLE
+            }
         )
     }
 
-    private val menuController: MenuController = BrowserMenuController()
-
-    init {
-        toolbar.display.indicators = listOf(
-            DisplayToolbar.Indicators.SECURITY,
-            DisplayToolbar.Indicators.TRACKING_PROTECTION,
-        )
-        toolbar.display.displayIndicatorSeparator = true
-        toolbar.display.menuController = menuController
-
-        toolbar.display.hint = context.getString(R.string.toolbar_hint)
-        toolbar.edit.hint = context.getString(R.string.toolbar_hint)
-
-        ToolbarAutocompleteFeature(toolbar).apply {
-            updateAutocompleteProviders(
-                listOf(historyStorage, shippedDomainsProvider),
-            )
+    private fun updateTabButtons(tabs: List<TabSessionState>, selectedTab: TabSessionState?) {
+        val activity = context as? Activity
+        val tabButtonsContainer = activity?.findViewById<LinearLayout>(R.id.tab_buttons_container)
+        // Set tabButtonView width to 70% of screen width
+        val tabButtonView = activity?.findViewById<HorizontalScrollView>(R.id.tabButtonView)
+        tabButtonView?.let { view ->
+            val displayMetrics = DisplayMetrics()
+            activity.windowManager.defaultDisplay.getMetrics(displayMetrics)
+            val screenWidth = displayMetrics.widthPixels
+            val newWidth = (screenWidth * 0.7).toInt()
+            view.layoutParams.width = newWidth
+            view.requestLayout()
         }
 
-        toolbar.display.setUrlBackground(
-            ResourcesCompat.getDrawable(context.resources, R.drawable.url_background, context.theme),
-        )
+        tabButtonsContainer?.let {
+            it.removeAllViews()
 
-        scope.launch {
-            store.flow()
-                .map { state -> state.selectedTab }
-                .distinctUntilChanged()
-                .collect { tab ->
-                    menuController.submitList(menuItems(tab))
+            tabs.forEachIndexed { index, tab ->
+                var tabName = tab.content.title
+                if (tabName.isEmpty()) tabName = tab.content.url.toString()
+                val button = TextView(context).apply {
+                    text = Editable.Factory.getInstance().newEditable("$index: $tabName")
+                    width = 150
+                    height = 100
+                    textSize = 9.0F
+                    setPadding(8, 8, 8, 8)
+                    setBackgroundResource(
+                        if (tab.id == selectedTab?.id) R.drawable.tab_button_background_active
+                        else R.drawable.tab_button_background
+                    )
+                    setTextColor(ContextCompat.getColor(context, R.color.tab_button_text_color))
+                    gravity = Gravity.CENTER
+
+                    setOnClickListener {
+                        tabsUseCases.selectTab(tab.id)
+                    }
                 }
+                it.addView(button)
+            }
+        } ?: run {
+            // Handle the case where tabButtonsContainer is null
+            //Logger.error("tab_buttons_container is null")
         }
     }
 

@@ -58,7 +58,8 @@ class TabTrayMenuTest {
         val tabCounterButton = onView(withId(R.id.counter_text))
 
         mDevice.waitForIdle()
-        tabCounterButton.click()
+        tabCounterButton.perform(click()) // Show/hide tab buttons container on click
+        tabCounterButton.perform(longClick()) // Show all tabs on long click
 
         val thereAreTabsOpenInTabTray = mDevice.findObject(UiSelector().text("about:blank")).exists()
 

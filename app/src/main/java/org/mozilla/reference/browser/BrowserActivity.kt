@@ -22,7 +22,7 @@ import mozilla.components.support.base.feature.UserInteractionHandler
 import mozilla.components.support.base.log.logger.Logger
 import mozilla.components.support.utils.SafeIntent
 import mozilla.components.support.webextensions.WebExtensionPopupObserver
-import org.mozilla.reference.browser.addons.WebExtensionActionPopupActivity
+import org.mozilla.reference.browser.addons.WebExtensionActionPopupDialogFragment
 import org.mozilla.reference.browser.browser.BrowserFragment
 import org.mozilla.reference.browser.browser.CrashIntegration
 import org.mozilla.reference.browser.ext.components
@@ -128,10 +128,8 @@ open class BrowserActivity : AppCompatActivity() {
     }
 
     private fun openPopup(webExtensionState: WebExtensionState) {
-        val intent = Intent(this, WebExtensionActionPopupActivity::class.java)
-        intent.putExtra("web_extension_id", webExtensionState.id)
-        intent.putExtra("web_extension_name", webExtensionState.name)
-        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-        startActivity(intent)
+        val fragmentManager = supportFragmentManager
+        val newFragment = WebExtensionActionPopupDialogFragment.create(webExtensionState.id)
+        newFragment.show(fragmentManager, "web_extension_popup")
     }
 }

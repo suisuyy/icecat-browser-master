@@ -43,13 +43,14 @@
         android:id="@+id/findInPageBar"
         android:layout_width="match_parent"
         android:layout_height="56dp"
-        android:layout_gravity="bottom"
+        android:layout_gravity="top"
+        android:layout_marginTop="100dp"
+        android:visibility="gone"
         android:background="#000000"
         mozac:findInPageQueryTextColor="#ffffff"
         mozac:findInPageQueryHintTextColor="#dddddd"
         mozac:findInPageResultCountTextColor="#ff88ff"
         mozac:findInPageButtonsTint="#ff88ff"
-        android:visibility="gone"
         app:layout_behavior="org.mozilla.reference.browser.browser.FindInPageBarBehavior" />
 
     <mozilla.components.browser.toolbar.BrowserToolbar
@@ -60,7 +61,26 @@
         android:background="@color/toolbarBackgroundColor"
         mozac:browserToolbarTrackingProtectionAndSecurityIndicatorSeparatorColor="@color/photonWhite"
         mozac:browserToolbarSuggestionForegroundColor="@color/toolbarSuggestionForeground"
-        mozac:browserToolbarSuggestionBackgroundColor="@color/toolbarSuggestionBackground" />
+        mozac:browserToolbarSuggestionBackgroundColor="@color/toolbarSuggestionBackground">
+
+    </mozilla.components.browser.toolbar.BrowserToolbar>
+    <HorizontalScrollView
+        android:id="@+id/tabButtonView"
+        android:layout_width="350dp"
+        android:layout_height="wrap_content"
+        android:scrollbars="none"
+        android:layout_gravity="top"
+        >
+        <LinearLayout
+            android:id="@+id/tab_buttons_container"
+            android:layout_height="match_parent"
+            android:layout_width="wrap_content"
+
+            android:orientation="horizontal"
+            />
+
+    </HorizontalScrollView>
+
 
     <mozilla.components.feature.readerview.view.ReaderViewControlsBar
         android:id="@+id/readerViewBar"
@@ -82,5 +102,6 @@
         android:layout_marginLeft="16dp"
         android:layout_marginBottom="16dp"
         app:layout_behavior="org.mozilla.reference.browser.browser.ReaderViewAppearanceButtonBehavior" />
+
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

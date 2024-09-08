@@ -6,6 +6,7 @@ package org.mozilla.reference.browser.browser
 
 import android.os.Bundle
 import android.view.View
+import android.widget.LinearLayout
 import androidx.preference.PreferenceManager
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import mozilla.components.browser.thumbnails.BrowserThumbnails
@@ -88,13 +89,7 @@ class BrowserFragment : BaseBrowserFragment(), UserInteractionHandler {
             ),
         )
 
-        TabsToolbarFeature(
-            toolbar = toolbar,
-            sessionId = sessionId,
-            store = requireComponents.core.store,
-            showTabs = ::showTabs,
-            lifecycleOwner = this,
-        )
+
 
         thumbnailsFeature.set(
             feature = BrowserThumbnails(
@@ -127,6 +122,13 @@ class BrowserFragment : BaseBrowserFragment(), UserInteractionHandler {
             owner = this,
             view = view,
         )
+        TabsToolbarFeature(
+            toolbar = toolbar,
+            sessionId = sessionId,
+            store = requireComponents.core.store,
+            showTabs = ::showTabs,
+            lifecycleOwner = this,
+        )
 
         windowFeature.set(
             feature = WindowFeature(
@@ -141,8 +143,9 @@ class BrowserFragment : BaseBrowserFragment(), UserInteractionHandler {
     }
 
     private fun showTabs() {
-        // For now we are performing manual fragment transactions here. Once we can use the new
-        // navigation support library we may want to pass navigation graphs around.
+        // val tabButtonsContainer = requireActivity().findViewById<LinearLayout>(R.id.tab_buttons_container)
+        // tabButtonsContainer.visibility = if (tabButtonsContainer.visibility == View.VISIBLE) View.GONE else View.VISIBLE
+        //show tabstray
         activity?.supportFragmentManager?.beginTransaction()?.apply {
             replace(R.id.container, TabsTrayFragment())
             commit()

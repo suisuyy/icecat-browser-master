@@ -96,7 +96,6 @@ class TabTrayMenuRobot {
 
         fun clickOpenTab(title: String, interact: BrowserRobot.() -> Unit): BrowserRobot.Transition {
             openTab(title).clickAndWaitForNewWindow()
-
             BrowserRobot().interact()
             return BrowserRobot.Transition()
         }

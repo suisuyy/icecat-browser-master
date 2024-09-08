@@ -20,6 +20,7 @@ import mozilla.components.browser.tabstray.TabsTray
 import mozilla.components.browser.tabstray.TabsTrayStyling
 import mozilla.components.browser.tabstray.ViewHolderProvider
 import mozilla.components.browser.thumbnails.loader.ThumbnailLoader
+import mozilla.components.browser.toolbar.BrowserToolbar
 import mozilla.components.feature.tabs.tabstray.TabsFeature
 import mozilla.components.support.base.feature.UserInteractionHandler
 import org.mozilla.reference.browser.R
@@ -52,6 +53,10 @@ class TabsTrayFragment : Fragment(), UserInteractionHandler {
 
         tabsPanel.initialize(tabsFeature, updateTabsToolbar = ::updateTabsToolbar)
         tabsToolbar.initialize(tabsFeature) { closeTabsTray() }
+
+        // Ensure the toolbar is visible
+        val toolbar: BrowserToolbar = requireActivity().findViewById(R.id.toolbar)
+        toolbar.visibility = View.VISIBLE
     }
 
     override fun onStart() {
